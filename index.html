@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analisa Masalah Printer - Naive Bayes</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* Custom styles */
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    /* Simple animation for result box */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in {
+      animation: fadeIn 0.5s ease-out forwards;
+    }
+  </style>
+</head>
+<body class="bg-gray-100">
+
+  <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+    <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
+      <div class="p-6 sm:p-8">
+        <!-- Header -->
+        <div class="mb-8 text-center">
+            <svg class="mx-auto h-12 w-auto text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" />
+            </svg>
+          <h1 class="mt-4 text-2xl md:text-3xl font-bold text-gray-900">Diagnosa Masalah Printer</h1>
+          <p class="mt-2 text-sm text-gray-500">Pilih gejala yang Anda alami untuk mendapatkan kemungkinan diagnosis masalah.</p>
+        </div>
+
+        <!-- Form Input -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div>
+            <label for="brand" class="block text-sm font-medium text-gray-700">Pilih Brand Printer</label>
+            <select id="brand" onchange="updateTypes()" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm">
+              <option value="Epson">Epson</option>
+              <option value="HP">HP</option>
+              <option value="Canon">Canon</option>
+            </select>
+          </div>
+          <div>
+            <label for="type" class="block text-sm font-medium text-gray-700">Pilih Tipe Printer</label>
+            <select id="type" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm"></select>
+          </div>
+        </div>
+
+        <!-- Checkbox Group -->
+        <div class="mb-8">
+          <p class="text-sm font-medium text-gray-700 mb-4">Pilih Permasalahan yang Dialami:</p>
+          <div role="group" aria-labelledby="checkbox-group-label" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4">
+            
+            <!-- Masalah Kualitas Cetak -->
+            <label class="flex items-center space-x-3 cursor-pointer">
+              <input type="checkbox" value="hasil bergaris" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+              <span class="text-gray-700 text-sm">Hasil Cetak Bergaris / Putus</span>
+            </label>
+            <label class="flex items-center space-x-3 cursor-pointer">
+              <input type="checkbox" value="warna pudar" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+              <span class="text-gray-700 text-sm">Warna Pudar / Tidak Sesuai</span>
+            </label>
+            <label class="flex items-center space-x-3 cursor-pointer">
+              <input type="checkbox" value="hasil kotor" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+              <span class="text-gray-700 text-sm">Hasil Cetak Kotor / Bernoda</span>
+            </label>
+            <label class="flex items-center space-x-3 cursor-pointer">
+              <input type="checkbox" value="ghosting" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+              <span class="text-gray-700 text-sm">Hasil Cetak Berbayang</span>
+            </label>
+            <label class="flex items-center space-x-3 cursor-pointer">
+              <input type="checkbox" value="misalignment" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+              <span class="text-gray-700 text-sm">Teks atau Gambar Miring</span>
+            </label>
+
+            <!-- Masalah Penanganan Kertas -->
+            <label class="flex items-center space-x-3 cursor-pointer">
+              <input type="checkbox" value="kertas macet" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+              <span class="text-gray-700 text-sm">Kertas Macet (Paper Jam)</span>
+            </label>
+            <label class="flex items-center space-x-3 cursor-pointer">
+              <input type="checkbox" value="narik banyak" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+              <span class="text-gray-700 text-sm">Menarik Banyak Kertas</span>
+            </label>
+            <label class="flex items-center space-x-3 cursor-pointer">
+              <input type="checkbox" value="tidak narik" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+              <span class="text-gray-700 text-sm">Tidak Bisa Menarik Kertas</span>
+            </label>
+
+            <!-- Masalah Konektivitas dan Software -->
+            <label class="flex items-center space-x-3 cursor-pointer">
+              <input type="checkbox" value="offline" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+              <span class="text-gray-700 text-sm">Printer Offline / Tidak Respons</span>
+            </label>
+            <label class="flex items-center space-x-3 cursor-pointer">
+              <input type="checkbox" value="antrean macet" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+              <span class="text-gray-700 text-sm">Antrean Cetak Macet</span>
+            </label>
+            <label class="flex items-center space-x-3 cursor-pointer">
+              <input type="checkbox" value="driver error" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+              <span class="text-gray-700 text-sm">Driver Error / Tidak Terinstal</span>
+            </label>
+            <label class="flex items-center space-x-3 cursor-pointer">
+              <input type="checkbox" value="lambat" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+              <span class="text-gray-700 text-sm">Pencetakan Sangat Lambat</span>
+            </label>
+
+            <!-- Masalah Tinta dan Toner -->
+            <label class="flex items-center space-x-3 cursor-pointer">
+              <input type="checkbox" value="cartridge tidak terdeteksi" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+              <span class="text-gray-700 text-sm">Cartridge Tidak Terdeteksi</span>
+            </label>
+            <label class="flex items-center space-x-3 cursor-pointer">
+              <input type="checkbox" value="peringatan palsu" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+              <span class="text-gray-700 text-sm">Peringatan Tinta Habis Palsu</span>
+            </label>
+            <label class="flex items-center space-x-3 cursor-pointer">
+              <input type="checkbox" value="kebocoran" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+              <span class="text-gray-700 text-sm">Kebocoran Tinta / Toner</span>
+            </label>
+
+            <!-- Masalah Lainnya -->
+            <label class="flex items-center space-x-3 cursor-pointer">
+              <input type="checkbox" value="lampu berkedip" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+              <span class="text-gray-700 text-sm">Lampu Indikator Berkedip</span>
+            </label>
+            <label class="flex items-center space-x-3 cursor-pointer">
+              <input type="checkbox" value="bunyi aneh" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+              <span class="text-gray-700 text-sm">Printer Mengeluarkan Suara Aneh</span>
+            </label>
+            <label class="flex items-center space-x-3 cursor-pointer">
+              <input type="checkbox" value="mati total" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+              <span class="text-gray-700 text-sm">Printer Mati Total</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Action Button -->
+        <div class="mt-10 text-center">
+          <button onclick="analyze()" class="w-full md:w-auto inline-flex justify-center items-center py-3 px-12 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">
+            Analisa Sekarang
+          </button>
+        </div>
+
+        <!-- Result Area -->
+        <div id="result" class="mt-8"></div>
+
+      </div>
+    </div>
+  </div>
+
+<script>
+  // Data untuk model printer berdasarkan brand
+  const printerTypes = {
+    Epson: ["EcoTank L3110", "EcoTank L1110", "L120"],
+    HP: ["Ink Tank 315", "DeskJet Ink Advantage 2135", "LaserJet Pro M15w"],
+    Canon: ["PIXMA G-Series", "PIXMA Ink Efficient E410", "imageCLASS LBP6030"]
+  };
+
+  // Data training untuk simulasi Naive Bayes
+  const trainingData = [
+    { brand: "Epson", type: "EcoTank L3110", problems: ["hasil bergaris", "warna pudar"], diagnosis: "Kemungkinan Head Printer kotor atau tersumbat. Lakukan 'Head Cleaning' dari software printer." },
+    { brand: "Epson", type: "EcoTank L3110", problems: ["kertas macet", "tidak narik"], diagnosis: "Periksa roller penarik kertas dari kotoran atau aus. Pastikan jenis dan posisi kertas sudah benar." },
+    { brand: "Epson", type: "L120", problems: ["lampu berkedip", "offline"], diagnosis: "Ini adalah 'General Error'. Coba restart printer. Jika berlanjut, kemungkinan waste ink pad penuh dan perlu di-reset." },
+    { brand: "HP", type: "LaserJet Pro M15w", problems: ["kertas macet", "narik banyak", "bunyi aneh"], diagnosis: "Sensor kertas bermasalah atau ada benda asing di jalur kertas. Periksa juga kondisi mekanik roller." },
+    { brand: "HP", type: "DeskJet Ink Advantage 2135", problems: ["cartridge tidak terdeteksi", "peringatan palsu"], diagnosis: "Chip pada cartridge kotor atau rusak. Coba bersihkan dengan tisu kering. Jika tidak berhasil, ganti cartridge." },
+    { brand: "HP", type: "DeskJet Ink Advantage 2135", problems: ["lambat", "offline"], diagnosis: "Periksa koneksi USB dan coba install ulang driver. Hapus antrean cetak yang macet." },
+    { brand: "Canon", type: "PIXMA G-Series", problems: ["hasil bergaris", "warna pudar", "kebocoran"], diagnosis: "Lakukan 'Deep Cleaning' pada head. Pastikan selang infus tidak masuk angin." },
+    { brand: "Canon", type: "PIXMA Ink Efficient E410", problems: ["bunyi aneh", "mati total"], diagnosis: "Terdengar bunyi aneh sebelum mati total bisa menandakan kerusakan mekanik atau power supply unit (PSU) rusak." },
+    { brand: "Canon", type: "imageCLASS LBP6030", problems: ["ghosting", "hasil kotor"], diagnosis: "Drum unit pada toner cartridge kemungkinan sudah mencapai akhir masa pakai dan perlu diganti." }
+  ];
+  
+  // Fungsi untuk memperbarui pilihan tipe printer berdasarkan brand
+  function updateTypes() {
+    const brand = document.getElementById("brand").value;
+    const typeSelect = document.getElementById("type");
+    typeSelect.innerHTML = "";
+    printerTypes[brand].forEach(model => {
+      const opt = document.createElement("option");
+      opt.value = model;
+      opt.textContent = model;
+      typeSelect.appendChild(opt);
+    });
+  }
+
+  // Panggil saat halaman pertama kali dimuat
+  updateTypes(); 
+
+  // Fungsi untuk mengubah array string menjadi token (lowercase)
+  function tokenize(arr) {
+    return arr.map(x => x.toLowerCase());
+  }
+
+  // Fungsi utama untuk melakukan analisa
+  function analyze() {
+    const brand = document.getElementById("brand").value;
+    const type = document.getElementById("type").value;
+    const selectedProblems = Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+    const resultBox = document.getElementById("result");
+    
+    // Validasi jika tidak ada masalah yang dipilih
+    if (selectedProblems.length === 0) {
+      resultBox.innerHTML = `
+        <div class="p-4 bg-yellow-50 border-l-4 border-yellow-400 fade-in">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M8.257 3.099c.636-1.21 2.315-1.21 2.95 0l5.425 10.32c.636 1.21-.26 2.73-1.616 2.73H4.448c-1.356 0-2.252-1.52-1.616-2.73L8.257 3.099zM9 13a1 1 0 112 0 1 1 0 01-2 0zm1-3a1 1 0 00-1 1v1a1 1 0 102 0v-1a1 1 0 00-1-1z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div class="ml-3">
+              <p class="text-sm text-yellow-700">
+                Pilih minimal satu permasalahan untuk dianalisa.
+              </p>
+            </div>
+          </div>
+        </div>`;
+      return;
+    }
+    
+    const tokens = tokenize(selectedProblems);
+    let scores = {};
+
+    // Filter data training yang sesuai dengan brand dan tipe yang dipilih
+    const relevantData = trainingData.filter(data => data.brand === brand && data.type === type);
+
+    // === Algoritma Naive Bayes Sederhana ===
+    // Menghitung skor untuk setiap kemungkinan diagnosis
+    for (const data of relevantData) {
+      const label = data.diagnosis;
+      const dataTokens = tokenize(data.problems);
+      
+      const vocab = new Set([...tokens, ...dataTokens]);
+      let score = 0; // P(class) dianggap uniform, jadi log(P(class)) sama untuk semua
+
+      for (const token of tokens) {
+        // Menghitung probabilitas P(gejala|diagnosis) dengan Laplace Smoothing
+        const count = dataTokens.filter(t => t === token).length;
+        const prob = (count + 1) / (dataTokens.length + vocab.size); 
+        score += Math.log(prob);
+      }
+      
+      // Jika diagnosis sudah ada, tambahkan skornya (jarang terjadi di data ini)
+      if (scores[label]) {
+        scores[label] += score;
+      } else {
+        scores[label] = score;
+      }
+    }
+    // === Akhir Algoritma ===
+
+    // Urutkan diagnosis berdasarkan skor probabilitas tertinggi
+    const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+
+    // Tampilkan hasil
+    if (sorted.length === 0) {
+      resultBox.innerHTML = `
+        <div class="p-4 bg-blue-50 border-l-4 border-blue-400 fade-in">
+          <div class="flex">
+            <div class="flex-shrink-0">
+               <svg class="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div class="ml-3">
+              <p class="text-sm text-blue-700">
+                Tidak ditemukan diagnosis yang cocok berdasarkan kombinasi gejala untuk model ini.
+              </p>
+            </div>
+          </div>
+        </div>`;
+      return;
+    }
+
+    // Bangun HTML untuk menampilkan hasil teratas
+    let resultHTML = `
+      <div class="bg-green-50 border-l-4 border-green-500 p-4 sm:p-6 rounded-r-lg fade-in">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Hasil Diagnosa</h3>
+        <ul class="space-y-4">`;
+
+    sorted.slice(0, 1).forEach(([label, score]) => {
+      resultHTML += `
+        <li class="p-4 bg-white rounded-md shadow-sm">
+          <p class="font-medium text-indigo-800">${label}</p>
+          <p class="text-xs text-gray-500 mt-1">Ini adalah kemungkinan penyebab paling umum berdasarkan gejala yang Anda pilih.</p>
+        </li>`;
+    });
+
+    resultHTML += `</ul></div>`;
+    resultBox.innerHTML = resultHTML;
+  }
+</script>
+
+</body>
+</html>
